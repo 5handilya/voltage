@@ -22,7 +22,7 @@ float vv_dot_product_256(const float* A, const float* B, size_t n){
         __m256 hsum = _mm256_hadd_ps(sum, sum);
         hsum = _mm256_hadd_ps(hsum, hsum);
         __m128 bottomhalf = _mm256_castps256_ps128(hsum);
-        __m128 tophalf = _mm256_extractf128_ps(hsum, 1); 
+        __m128 tophalf = _mm256_extractf128_ps(hsum, 1); //interestingly, extractf128 position starts from 1, not 0
         __m128 result = _mm_add_ps(bottomhalf, tophalf);
         
         return _mm_cvtss_f32(result); 

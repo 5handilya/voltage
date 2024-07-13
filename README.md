@@ -7,6 +7,7 @@
 3. publish
 
 ~~###  1. Functions to be implemented~~
+
 I. Vector - Vector
 ~~- dot product ~~
 II. Vector - Scalar

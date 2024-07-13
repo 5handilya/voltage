@@ -27,7 +27,7 @@ float vv_dot_product_256(const float* A, const float* B, size_t n){
     float* ap = (float*) aligned_alloc(32, sizeof(float)*aligned_n);  
     float* bp = (float*) aligned_alloc(32, sizeof(float)*aligned_n);  
         if(ap == nullptr || bp == nullptr){
-            cout << "avx2 vv dotproduct: failed to allocate aligned memory" << endl;
+            //cout << "avx2 vv dotproduct: failed to allocate aligned memory" << endl;
         }
         else{
             for (int i = 0; i <n; i++) {
@@ -36,7 +36,7 @@ float vv_dot_product_256(const float* A, const float* B, size_t n){
              }
          }
          //since this is a dot, we can simply append 0s from indices n to aligned_n-1]
-        cout << "avx2 vv dotproduct: appending 0s to make size 8-multiple" << endl;
+        ////cout << "avx2 vv dotproduct: appending 0s to make size 8-multiple" << endl;
         if (n != aligned_n){
            for (size_t x = n; x < aligned_n; x++){
                 ap[x] = 0.0f;
@@ -48,7 +48,7 @@ float vv_dot_product_256(const float* A, const float* B, size_t n){
     //looping over sets of 8 floats from A and B for AVX2 multiplication
     float product = 0;
     size_t i;
-    cout << "initiating avx2 vv dotproduct. vector size " << n << endl;
+    ////cout << "initiating avx2 vv dotproduct. vector size " << n << endl;
         for (i = 0; i < aligned_n; i+=8){
         __m256 sum = _mm256_setzero_ps();
         __m256 va = _mm256_load_ps(&ap[i]);
@@ -66,11 +66,11 @@ float vv_dot_product_256(const float* A, const float* B, size_t n){
     }
     free(ap);
     free(bp);       
-    cout << "avx2 vv dot product result: " << product << endl;
+    //cout << "avx2 vv dot product result: " << product << endl;
     return product;
 }
 float* vs_multiply_256(const float* v, const float s, size_t size){
-    cout << "avx2 vs mult: multiplying vector of size " << size << " with scalar " << s << endl; 
+    //cout << "avx2 vs mult: multiplying vector of size " << size << " with scalar " << s << endl; 
     auto fullstart = chrono::system_clock().now();
     size_t aligned_size = (size%8==0)?size:(size + (8 - size%8));
     //allocating 32-bit aligned memory
@@ -107,18 +107,18 @@ float* vs_multiply_256(const float* v, const float s, size_t size){
     }
     free(v32);
     auto fullstop = chrono::system_clock().now();
-    cout << "debug vs mult result:"<< endl;
-    cout << " { ";
+    //cout << "debug vs mult result:"<< endl;
+    //cout << " { ";
     for ( int i = 0; i < size;  i++){
-        cout << result[i] << " ";
+        //cout << result[i] << " ";
     }
-    cout << "}" << endl;
-    cout << "avx vs mult: result calculated" << endl;
-    cout << "debug stats: " << endl;
-    cout << "full time (us): " << chrono::duration_cast<chrono::microseconds>(fullstop-fullstart).count() << endl;
-    cout << "mult time (us): " << chrono::duration_cast<chrono::microseconds>(multstop-multstart).count() << endl;
-    cout << "pre-mult time (us): " << chrono::duration_cast<chrono::microseconds>(multstart-fullstart).count() << endl;
-    cout << "post-mult time (us): " << chrono::duration_cast<chrono::microseconds>(fullstop-multstop).count() << endl;
+    //cout << "}" << endl;
+    //cout << "avx vs mult: result calculated" << endl;
+    //cout << "debug stats: " << endl;
+    //cout << "full time (us): " << chrono::duration_cast<chrono::microseconds>(fullstop-fullstart).count() << endl;
+    //cout << "mult time (us): " << chrono::duration_cast<chrono::microseconds>(multstop-multstart).count() << endl;
+    //cout << "pre-mult time (us): " << chrono::duration_cast<chrono::microseconds>(multstart-fullstart).count() << endl;
+    //cout << "post-mult time (us): " << chrono::duration_cast<chrono::microseconds>(fullstop-multstop).count() << endl;
     return trimmed_result;
 }
 float * mv_multiply_256(const float* matrix, const float* vect, size_t size_mr, size_t size_mc, size_t size_v){
@@ -126,7 +126,7 @@ float * mv_multiply_256(const float* matrix, const float* vect, size_t size_mr, 
     //load vector in register
     //consec load matrix rows
     //m256_mul, store in
-    cout << "avx2 mv_multiply: matrix size " << size_mr <<  "  x  " <<  size_mc<< " vector size " << size_v << endl;
+    //cout << "avx2 mv_multiply: matrix size " << size_mr <<  "  x  " <<  size_mc<< " vector size " << size_v << endl;
     //basically a series of vv_mults
     size_t r,c;
     float* result = (float*) aligned_alloc(32, sizeof(float)*size_mr);
@@ -140,43 +140,47 @@ float * mv_multiply_256(const float* matrix, const float* vect, size_t size_mr, 
         result[r] = subresult;
     }
     size_t x;
-    cout << "avx2 vv_mult result: " << endl;
+    //cout << "avx2 vv_mult result: " << endl;
     for (x = 0; x < size_mr; x++){
-        cout << result[x] << endl;
+        //cout << result[x] << endl;
     }
     return result;
 }
 float* mm_multiply_256(const float* matrix1, const float* matrix2, size_t size_m, size_t size_n, size_t size_o, size_t size_p){
     //result matrix allocated m * p * size(float)
     //check columns equal
+    auto startmul = chrono::system_clock().now();
     float* result = (float*) aligned_alloc(32, sizeof(float)*size_m*size_p);
     if(size_n != size_o){
-        cout << "check your input you flaky bitch take this nullptr fuck you" << endl;
+        //cout << "check your input you flaky bitch take this nullptr fuck you" << endl;
         return nullptr;
     }
     size_t c2i, r2i;
     float* m2v = (float*)aligned_alloc(32, sizeof(float)*size_o); 
     float* subresult = (float*)aligned_alloc(32, sizeof(float*)*size_m);
     for (c2i = 0; c2i < size_p; c2i ++ ){
-        cout << "M2V" << endl;
+        //cout << "M2V" << endl;
         for (r2i = 0; r2i < size_o; r2i ++){
             m2v[r2i]  = matrix2[c2i + r2i* size_p]; 
-            cout << m2v[r2i] << endl;
+            //cout << m2v[r2i] << endl;
         }
-        cout << endl;
+        //cout << endl;
         subresult = mv_multiply_256(matrix1, m2v, size_m, size_n, size_m);
         for (r2i = 0; r2i < size_m; r2i ++){
-            cout <<"subresult " << subresult[r2i] <<  "FOR " << r2i << " x " << c2i <<  " PUT AT " << r2i*size_p + c2i << endl;
+            //cout <<"subresult " << subresult[r2i] <<  "FOR " << r2i << " x " << c2i <<  " PUT AT " << r2i*size_p + c2i << endl;
             result[r2i*size_p + c2i] = subresult[r2i];
         }
     }
+    auto stopmul = chrono::system_clock().now();
     cout << "AVX2 MM_MULT RESULT: " << endl;
     for (int x = 0; x < size_m; x++){
         for (int y = 0; y < size_p; y++){
-            cout << " " << result[x*size_p + y] << " ";
+           // cout << " " << result[x*size_p + y] << " ";
         }
-        cout << endl;
+        //cout << endl;
     }
+    cout << "Multiplied dimensions " << size_m << " x " << size_n << " with " << size_o << " x " << size_p << endl; 
+    cout << "Elapsed (ms): " << chrono::duration_cast<chrono::milliseconds>(stopmul-startmul).count()  << "." << endl;
     return result;
 }
 

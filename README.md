@@ -8,24 +8,24 @@
 
 ###  1. Functions to be implemented
 
-~~vector-vector dot product~~
+~~1.1 vector-vector dot product~~
 
-~~- vector scaling~~
+~~1.2 vector scaling~~
 
-~~- matrix-vector multiplication~~
+~~1.3 matrix-vector multiplication~~
 
-~~- matrix-matrix multiplication~~
+~~1.4 matrix-matrix multiplication~~
 
 ### 2. Header packaging and optimization
 
-I. Refactor - unified 
-II. Error handling
-III. General debugging and logging add
-IV. Benchmarking and optimization 
+2.1 Refactor - unified 
+2.2 Error handling
+2.3 General debugging and logging add
+2.4 Benchmarking and optimization 
 compare to which libs??
 
 ### 3. Publish
 
-I. Write documentation
+3.1 Write documentation
 
-II. ??
+3.2 ??

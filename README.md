@@ -18,10 +18,10 @@
 
 ### 2. Header packaging and optimization
 
-2.1 Refactor - unified
-2.2 Error handling
-2.3 General debugging and logging ad
-2.4 Benchmarking and optimization (compare to which libs??)
+1. Refactor - unified
+2. Error handling
+3. General debugging and logging ad
+4. Benchmarking and optimization (compare to which libs??)
 
 ### 3. Publish
 

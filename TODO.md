@@ -9,7 +9,7 @@
 I. Vector - Vector
 ~~- dot product ~~
 II. Vector - Scalar
-- SV multiplication
+~~- SV multiplication~~
 III. Matrix - Vector
 - MV multiplication
 IV. Matrix - Matrix

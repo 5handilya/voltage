@@ -6,7 +6,7 @@
 2. package as a header library
 3. publish
 
-~~###  1. Functions to be implemented~~
+###  1. Functions to be implemented
 
 I. Vector - Vector
 

@@ -12,6 +12,5 @@ int size = 8;
    float s = 2;
     //vv_dot_product_256(ap,bp,size);
     vs_multiply(ap, 2, size);
-    
     return 0;
 }

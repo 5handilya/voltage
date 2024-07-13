@@ -1,5 +1,5 @@
 # VOLTAGE 
-## *a C++ BLAS by Kunal Shandilya*
+*a SIMD-accelerated C++ BLAS*
 
 ## Overview
 1. implement SIMD-leveraging functions required for neural net backprop and inference

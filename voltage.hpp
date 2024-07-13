@@ -4,10 +4,19 @@
 #include <stdio.h>
 #include <iostream>
 #include <immintrin.h>
+#include <chrono>
 using namespace std;
 
+/** ============================
+Voltage, a C++ BLAS by Kunal Shandilya
+    Legend for functions etc.:
+        v = vector
+        s = scalar
+        m = matrix    
+
+ ============================ */
 //AVX dot product of A and B
-//ASSUMES 32ALIGNED 
+//also handles 32bit alignment
 float vv_dot_product_256(const float* A, const float* B, size_t n){
     //allocating 32bit-aligned memory to vectors
     //adjusting for non 8 multiple n:
@@ -59,7 +68,56 @@ float vv_dot_product_256(const float* A, const float* B, size_t n){
     return product;
 }
 
-float vs_mult(const float* v, const float* s, size_t size){
-    return 0.0f;
+float* vs_multiply(const float* v, const float s, size_t size){
+    auto fullstart = chrono::system_clock().now();
+    cout << "avx2 vs mult: multiplying vector of size " << size << " with scalar " << s << endl; 
+    size_t aligned_size = (size%8==0)?size:(size + (8 - size%8));
+    //allocating 32-bit aligned memory
+    float* v32 = (float*) aligned_alloc(32, sizeof(float)*aligned_size);
+    __m256 s32reg = _mm256_set1_ps(s);
+    size_t i;
+    for (i = 0; i < size; i++){
+        v32[i] = v[i];
+    }
+    //adjustment for non 8 multiple sized
+    if (size != aligned_size){
+        cout << "avx2 vs mult: appending 0s to increase vector size to 8-multiple" << endl;
+        //append 0s to vector, trim to size before returning
+        size_t x;
+        for (x = size; x < aligned_size; x++){
+            v32[x] = 0.0f;
+        }
+    }
+    float* result = (float*) aligned_alloc(32, sizeof(float)*aligned_size);
+    //multiplication
+    size_t c;
+    auto multstart = chrono::system_clock().now();
+    for (c = 0; c < aligned_size; c+=8){
+        __m256 v32reg = _mm256_load_ps(&v32[c]);
+        __m256 product = _mm256_mul_ps(v32reg, s32reg);
+        _mm256_store_ps(&result[c], product);
+    }
+    auto multstop = chrono::system_clock().now();
+    float* trimmed_result = result;
+    if (size != aligned_size){
+        size_t j;
+        for (j = 0; j < size; j++){
+            trimmed_result[j] = result[j];
+        }
+    }
+    free(v32);
+    cout << "debug vs mult result:"<< endl;
+    cout << " { ";
+    for ( int i = 0; i < size;  i++){
+        cout << result[i] << " ";
+    }
+    cout << "}" << endl;
+    auto fullstop = chrono::system_clock().now();
+    cout << "avx vs mult: result calculated" << endl;
+    cout << "debug stats: " << endl << "full time (microseconds): " << chrono::duration_cast<chrono::microseconds>(fullstop-fullstart).count() << endl << " mult time (microseconds): " << chrono::duration_cast<chrono::microseconds>(multstop-multstart).count() << endl;  
+    return trimmed_result;
 }
+
+
+
 #endif

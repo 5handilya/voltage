@@ -6,11 +6,12 @@
 using namespace std;
 
 int main(){
-    int size = 11;
-   float ap[] = {1.0, 1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0}; 
+int size = 8;
+   float ap[] = {1.0, 1.0,1.0,1.0,1.0,1.0,1.0,1.0}; 
    float bp[] = {1.0, 1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0}; 
-    vv_dot_product_256(ap,bp,size);
-    
+   float s = 2;
+    //vv_dot_product_256(ap,bp,size);
+    vs_multiply(ap, 2, size);
     
     return 0;
 }

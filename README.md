@@ -1,5 +1,5 @@
 # VOLTAGE 
-*a SIMD-accelerated BLAS*
+*a SIMD-accelerated BLAS library*
 
 ## Overview
 1. implement SIMD-leveraging functions required for neural net backprop and inference

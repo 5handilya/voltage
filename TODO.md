@@ -7,7 +7,7 @@
 
 ###  1. Functions to be implemented
 I. Vector - Vector
-- dot product
+~~- dot product ~~
 II. Vector - Scalar
 - SV multiplication
 III. Matrix - Vector

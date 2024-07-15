@@ -11,7 +11,7 @@
 ~~2. vector scaling~~
 ~~3 matrix-vector multiplication~~
 ~~4 matrix-matrix multiplication~~
-### 2. Header packaging and optimization
+### 2. Header packaging and optimization (current)
 1. Refactor - unified
 2. Error handling
 3. General debugging and logging ad

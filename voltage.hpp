@@ -118,6 +118,9 @@ float* vs_multiply(const float* v, const float s, size_t size){
     return trimmed_result;
 }
 
-
-
+/**TODO
+1. Transpose vectorized
+2. Matrix add, port existing code here
+3. Matrix class, port existing code here  
+*/
 #endif

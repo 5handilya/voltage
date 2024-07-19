@@ -1,4 +1,20 @@
 // https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#
+/**
+░▒▓█▓▒░░▒▓█▓▒░░▒▓██████▓▒░░▒▓█▓▒░   ░▒▓████████▓▒░▒▓██████▓▒░ ░▒▓██████▓▒░░▒▓████████▓▒░ 
+░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░        
+ ░▒▓█▓▒▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░        
+ ░▒▓█▓▒▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░  ░▒▓████████▓▒░▒▓█▓▒▒▓███▓▒░▒▓██████▓▒░   
+  ░▒▓█▓▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░        
+  ░▒▓█▓▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░        
+   ░▒▓██▓▒░   ░▒▓██████▓▒░░▒▓████████▓▒░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░░▒▓██████▓▒░░▒▓████████▓▒░ 
+
+VOLTAGE, a C++ BLAS by Kunal Shandilya
+Legend for functions etc.:
+    v = vector
+    s = scalar
+    m = matrix    
+
+============================ */
 #ifndef voltage
 #define voltage
 #include <stdio.h>
@@ -7,14 +23,11 @@
 #include <chrono>
 using namespace std;
 
-/** ============================
-Voltage, a C++ BLAS by Kunal Shandilya
-    Legend for functions etc.:
-        v = vector
-        s = scalar
-        m = matrix    
+class matrix{
+    public:
+    private:
 
- ============================ */
+};
 //AVX dot product of A and B
 //also handles 32bit alignment
 float vv_dot_product_256(const float* A, const float* B, size_t n){

@@ -30,28 +30,28 @@ class matrix{
 };
 //AVX dot product of A and B
 //also handles 32bit alignment
-float vv_dot_product_256(const float* A, const float* B, size_t n){
+float vv_dot_product_256(float* A, float* B, size_t n){
     //allocating 32bit-aligned memory to vectors
     //adjusting for non 8 multiple n:
     size_t aligned_n = (n%8==0)?n:(n + (8 - n%8)); 
-    float* ap = (float*) aligned_alloc(32, sizeof(float)*aligned_n);  
-    float* bp = (float*) aligned_alloc(32, sizeof(float)*aligned_n);  
-        if(ap == nullptr || bp == nullptr){
-            cout << "avx2 vv dotproduct: failed to allocate aligned memory" << endl;
-        }
-        else{
-            for (int i = 0; i <n; i++) {
-                ap[i] = A[i];
-                bp[i] = B[i];
-                cout << i << " added " << ap[i] << " " << bp[i] << endl;
-             }
-         }
+    //float* ap = (float*) aligned_alloc(32, sizeof(float)*aligned_n);  
+    //float* bp = (float*) aligned_alloc(32, sizeof(float)*aligned_n);  
+    //    if(ap == nullptr || bp == nullptr){
+    //        cout << "avx2 vv dotproduct: failed to allocate aligned memory" << endl;
+    //    }
+    //    else{
+    //        for (int i = 0; i <n; i++) {
+    //            ap[i] = A[i];
+    //            bp[i] = B[i];
+    //            cout << i << " added " << ap[i] << " " << bp[i] << endl;
+    //         }
+    //     }
          //since this is a dot, we can simply append 0s from indices n to aligned_n-1]
         cout << "avx2 vv dotproduct: appending 0s to make size 8-multiple" << endl;
         if (n % 8 != 0){
            for (size_t x = n; x < aligned_n; x++){
-                ap[x] = 0.0f;
-                bp[x] = 0.0f;
+                A[x] = 0.0f;
+                B[x] = 0.0f;
            } 
         }
     //calculation
@@ -61,11 +61,12 @@ float vv_dot_product_256(const float* A, const float* B, size_t n){
     size_t i;
     cout << "initiating avx2 vv dotproduct. vector size " << n << endl;
         for (i = 0; i < aligned_n; i+=8){
-        __m256 sum = _mm256_setzero_ps();
-        __m256 va = _mm256_load_ps(&ap[i]);
-        __m256 vb = _mm256_load_ps(&bp[i]);
-        __m256 mul = _mm256_mul_ps(va, vb);
-        sum = _mm256_add_ps(sum, mul);
+       // __m256 sum = _mm256_setzero_ps();
+       // __m256 va = _mm256_load_ps(&A[i]);
+       // __m256 vb = _mm256_load_ps(&B[i]);
+        //__m256 mul = _mm256_mul_ps(va, vb);
+        __m256 sum = _mm256_mul_ps(_mm256_load_ps(&A[i]), _mm256_load_ps(&B[i]));
+        //sum = _mm256_add_ps(sum, mul);
         
         //next, we need to add the partial sums inside the 'sum' register by consecutive horizontal adds
         __m256 hsum = _mm256_hadd_ps(sum, sum);

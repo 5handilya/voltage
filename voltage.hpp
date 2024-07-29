@@ -30,6 +30,22 @@ class matrix{
 };
 //AVX dot product of A and B
 //also handles 32bit alignment
+float vv_dot_avx_cache_optimized(const float* a, const float* b, size_t n) {
+    constexpr size_t cache_line = 64; //cache line size in bytes
+    constexpr size_t floats_per_cache_line = cache_line / sizeof(float);
+    
+    __m256 sum = _mm256_setzero_ps();
+    for (size_t i = 0; i < n; i += floats_per_cache_line) {
+        for (size_t j = 0; j < floats_per_cache_line; j += 8) {
+            __m256 va = _mm256_loadu_ps(a + i + j);
+            __m256 vb = _mm256_loadu_ps(b + i + j);
+            sum = _mm256_add_ps(sum, _mm256_mul_ps(va, vb));
+        }
+    }
+    __m256 hsum = _mm256_hadd_ps(sum, sum);
+    hsum = _mm256_hadd_ps(hsum, hsum);
+    return _mm_cvtss_f32(_mm256_extractf128_ps(hsum, 0)) + _mm_cvtss_f32(_mm256_extractf128_ps(hsum, 1));
+}
 float vv_dot_product_256(float* A, float* B, size_t n){
     //allocating 32bit-aligned memory to vectors
     //adjusting for non 8 multiple n:

@@ -32,39 +32,97 @@ class matrix{
 //AVX dot product of A and B
 //also handles 32bit alignment
 float vv_dot_avx_cache_optimized(const float* a, const float* b, size_t n) {
-    constexpr size_t cache_line = 64; //cache line size in bytes
-    constexpr size_t floats_per_cache_line = cache_line / sizeof(float);
+    //constexpr size_t cache_line = 64; //cache line size in bytes
+    //constexpr size_t floats_per_cache_line = cache_line / sizeof(float);
     auto start = system_clock().now();
     __m256 sum = _mm256_setzero_ps();
-    for (size_t i = 0; i < n; i += floats_per_cache_line) {
-        for (size_t j = i; j < i + floats_per_cache_line; j++) {
-            __m256 va = _mm256_loadu_ps(&a[j]);
-            __m256 vb = _mm256_loadu_ps(&b[j]);
-            sum = _mm256_add_ps(sum, _mm256_mul_ps(va, vb));
-        }
+    for (size_t i = 0; i < n; i += 8) {
+        __m256 va = _mm256_load_ps(&a[i]);
+        __m256 vb = _mm256_load_ps(&b[i]);
+        sum = _mm256_fmadd_ps(va, vb, sum); //using FMA speeds this up for 65 & 10^4,5 but gap decreases after
     }
     __m256 hsum = _mm256_hadd_ps(sum, sum);
     hsum = _mm256_hadd_ps(hsum, hsum);
     auto stop = system_clock().now();
-    cout << "vv dot avx cache optim. duration (us): " << duration_cast<microseconds>(stop - start).count() << endl;
-    cout << "vv dot. cache optim flops: " << duration_cast<microseconds>(stop - start).count()*1000000/(2000) << endl;
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    double seconds = duration.count() / 1e6;
+    double flops = 2.0 * n; // 2 operations per element
+    double gflops = (flops / seconds) / 1e9;
+    cout << "vv dot. duration (us): " << duration_cast<microseconds>(stop - start).count() << endl;
+    cout << "GFLOPS: " << gflops << endl;
     return _mm_cvtss_f32(_mm256_extractf128_ps(hsum, 0)) + _mm_cvtss_f32(_mm256_extractf128_ps(hsum, 1));
 }
 float dot(const float* a, const float* b, size_t n) {
     auto start = system_clock().now();
     __m256 sum = _mm256_setzero_ps();
-    for (size_t i = 0; i < n; i += 8) {
-        for (size_t j = i; j < i+8; j++) {
-            __m256 va = _mm256_loadu_ps(&a[j]);
-            __m256 vb = _mm256_loadu_ps(&b[j]);
-            sum = _mm256_fmadd_ps(va, vb, sum);
-        }
+    //__m256 va = _mm256_setzero_ps();
+    //__m256 vb = _mm256_setzero_ps();
+    for (size_t i = 0; i < n; i+=8){
+        __m256 va = _mm256_load_ps(&a[i]);
+        __m256 vb = _mm256_load_ps(&b[i]);
+        //sum = _mm256_add_ps(sum, _mm256_mul_ps(va, vb));
+        sum = _mm256_fmadd_ps(va, vb, sum); //using FMA speeds this up for 65 & 10^4,5 but gap decreases after
     }
     __m256 hsum = _mm256_hadd_ps(sum, sum);
     hsum = _mm256_hadd_ps(hsum, hsum);
     auto stop = system_clock().now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    double seconds = duration.count() / 1e6;
+    double flops = 2.0 * n; // 2 operations per element
+    double gflops = (flops / seconds) / 1e9;
     cout << "vv dot. duration (us): " << duration_cast<microseconds>(stop - start).count() << endl;
-    cout << "vv dot. flops: " << duration_cast<microseconds>(stop - start).count()*1000000/(2000) << endl;
+    cout << "GFLOPS: " << gflops << endl;
+    return _mm_cvtss_f32(_mm256_extractf128_ps(hsum, 0)) + _mm_cvtss_f32(_mm256_extractf128_ps(hsum, 1));
+}
+float dot_improved_2(const float* __restrict a, const float* __restrict b, size_t n) {
+    auto start = system_clock().now();
+    __m256 sum1 = _mm256_setzero_ps();
+    __m256 sum2 = _mm256_setzero_ps();
+    //__m256 sum3 = _mm256_setzero_ps();
+    //__m256 sum4 = _mm256_setzero_ps();
+
+    for (size_t i = 0; i < n; i += 16) {
+        sum1 = _mm256_fmadd_ps(_mm256_load_ps(&a[i]), _mm256_load_ps(&b[i]), sum1);
+        sum2 = _mm256_fmadd_ps(_mm256_load_ps(&a[i+8]), _mm256_load_ps(&b[i+8]), sum2);
+        //sum3 = _mm256_fmadd_ps(_mm256_load_ps(&a[i+16]), _mm256_load_ps(&b[i+16]), sum3);
+        //sum4 = _mm256_fmadd_ps(_mm256_load_ps(&a[i+24]), _mm256_load_ps(&b[i+24]), sum4);
+    }
+    //__m256 sum = _mm256_add_ps(_mm256_add_ps(sum1, sum2), _mm256_add_ps(sum3, sum4));
+    __m256 sum = _mm256_add_ps(sum1, sum2);
+    __m256 hsum = _mm256_hadd_ps(sum, sum);
+    hsum = _mm256_hadd_ps(hsum, hsum);
+    auto stop = system_clock().now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    double seconds = duration.count() / 1e6;
+    double flops = 2.0 * n; // 2 operations per element
+    double gflops = (flops / seconds) / 1e9;
+    cout << "vv dot. duration (us): " << duration_cast<microseconds>(stop - start).count() << endl;
+    cout << "GFLOPS: " << gflops << endl;
+    return _mm_cvtss_f32(_mm256_extractf128_ps(hsum, 0)) + _mm_cvtss_f32(_mm256_extractf128_ps(hsum, 1));
+}
+float dot_improved_4(const float* __restrict a, const float* __restrict b, size_t n) {
+    auto start = system_clock().now();
+    __m256 sum1 = _mm256_setzero_ps();
+    __m256 sum2 = _mm256_setzero_ps();
+    __m256 sum3 = _mm256_setzero_ps();
+    __m256 sum4 = _mm256_setzero_ps();
+
+    for (size_t i = 0; i < n; i += 16) {
+        sum1 = _mm256_fmadd_ps(_mm256_load_ps(&a[i]), _mm256_load_ps(&b[i]), sum1);
+        sum2 = _mm256_fmadd_ps(_mm256_load_ps(&a[i+8]), _mm256_load_ps(&b[i+8]), sum2);
+        sum3 = _mm256_fmadd_ps(_mm256_load_ps(&a[i+16]), _mm256_load_ps(&b[i+16]), sum3);
+        sum4 = _mm256_fmadd_ps(_mm256_load_ps(&a[i+24]), _mm256_load_ps(&b[i+24]), sum4);
+    }
+    __m256 sum = _mm256_add_ps(_mm256_add_ps(sum1, sum2), _mm256_add_ps(sum3, sum4));
+    __m256 hsum = _mm256_hadd_ps(sum, sum);
+    hsum = _mm256_hadd_ps(hsum, hsum);
+    auto stop = system_clock().now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    double seconds = duration.count() / 1e6;
+    double flops = 2.0 * n; // 2 operations per element
+    double gflops = (flops / seconds) / 1e9;
+    cout << "vv dot. duration (us): " << duration_cast<microseconds>(stop - start).count() << endl;
+    cout << "GFLOPS: " << gflops << endl;
     return _mm_cvtss_f32(_mm256_extractf128_ps(hsum, 0)) + _mm_cvtss_f32(_mm256_extractf128_ps(hsum, 1));
 }
 float vv_dot_product_256(float* A, float* B, size_t n){

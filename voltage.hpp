@@ -1,18 +1,18 @@
 // https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#
 /**
-░▒▓█▓▒░░▒▓█▓▒░░▒▓██████▓▒░░▒▓█▓▒░   ░▒▓████████▓▒░▒▓██████▓▒░ ░▒▓██████▓▒░░▒▓████████▓▒░ 
-░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░        
- ░▒▓█▓▒▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░        
- ░▒▓█▓▒▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░  ░▒▓████████▓▒░▒▓█▓▒▒▓███▓▒░▒▓██████▓▒░   
-  ░▒▓█▓▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░        
-  ░▒▓█▓▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░        
-   ░▒▓██▓▒░   ░▒▓██████▓▒░░▒▓████████▓▒░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░░▒▓██████▓▒░░▒▓████████▓▒░ 
+░▒▓█▓▒░░▒▓█▓▒░░▒▓██████▓▒░░▒▓█▓▒░   ░▒▓████████▓▒░▒▓██████▓▒░ ░▒▓██████▓▒░░▒▓████████▓▒░
+░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░
+ ░▒▓█▓▒▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░
+ ░▒▓█▓▒▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░  ░▒▓████████▓▒░▒▓█▓▒▒▓███▓▒░▒▓██████▓▒░
+  ░▒▓█▓▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░
+  ░▒▓█▓▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░
+   ░▒▓██▓▒░   ░▒▓██████▓▒░░▒▓████████▓▒░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░░▒▓██████▓▒░░▒▓████████▓▒░
 
 VOLTAGE, a C++ BLAS by Kunal Shandilya
 Legend for functions etc.:
     v = vector
     s = scalar
-    m = matrix    
+    m = matrix
 
 ============================ */
 #ifndef voltage
@@ -22,6 +22,7 @@ Legend for functions etc.:
 #include <immintrin.h>
 #include <chrono>
 using namespace std;
+using namespace std::chrono;
 
 class matrix{
     public:
@@ -33,25 +34,45 @@ class matrix{
 float vv_dot_avx_cache_optimized(const float* a, const float* b, size_t n) {
     constexpr size_t cache_line = 64; //cache line size in bytes
     constexpr size_t floats_per_cache_line = cache_line / sizeof(float);
-    
+    auto start = system_clock().now();
     __m256 sum = _mm256_setzero_ps();
     for (size_t i = 0; i < n; i += floats_per_cache_line) {
-        for (size_t j = 0; j < floats_per_cache_line; j += 8) {
-            __m256 va = _mm256_loadu_ps(a + i + j);
-            __m256 vb = _mm256_loadu_ps(b + i + j);
+        for (size_t j = i; j < i + floats_per_cache_line; j++) {
+            __m256 va = _mm256_loadu_ps(&a[j]);
+            __m256 vb = _mm256_loadu_ps(&b[j]);
             sum = _mm256_add_ps(sum, _mm256_mul_ps(va, vb));
         }
     }
     __m256 hsum = _mm256_hadd_ps(sum, sum);
     hsum = _mm256_hadd_ps(hsum, hsum);
+    auto stop = system_clock().now();
+    cout << "vv dot avx cache optim. duration (us): " << duration_cast<microseconds>(stop - start).count() << endl;
+    cout << "vv dot. cache optim flops: " << duration_cast<microseconds>(stop - start).count()*1000000/(2000) << endl;
+    return _mm_cvtss_f32(_mm256_extractf128_ps(hsum, 0)) + _mm_cvtss_f32(_mm256_extractf128_ps(hsum, 1));
+}
+float dot(const float* a, const float* b, size_t n) {
+    auto start = system_clock().now();
+    __m256 sum = _mm256_setzero_ps();
+    for (size_t i = 0; i < n; i += 8) {
+        for (size_t j = i; j < i+8; j++) {
+            __m256 va = _mm256_loadu_ps(&a[j]);
+            __m256 vb = _mm256_loadu_ps(&b[j]);
+            sum = _mm256_fmadd_ps(va, vb, sum);
+        }
+    }
+    __m256 hsum = _mm256_hadd_ps(sum, sum);
+    hsum = _mm256_hadd_ps(hsum, hsum);
+    auto stop = system_clock().now();
+    cout << "vv dot. duration (us): " << duration_cast<microseconds>(stop - start).count() << endl;
+    cout << "vv dot. flops: " << duration_cast<microseconds>(stop - start).count()*1000000/(2000) << endl;
     return _mm_cvtss_f32(_mm256_extractf128_ps(hsum, 0)) + _mm_cvtss_f32(_mm256_extractf128_ps(hsum, 1));
 }
 float vv_dot_product_256(float* A, float* B, size_t n){
     //allocating 32bit-aligned memory to vectors
     //adjusting for non 8 multiple n:
-    size_t aligned_n = (n%8==0)?n:(n + (8 - n%8)); 
-    //float* ap = (float*) aligned_alloc(32, sizeof(float)*aligned_n);  
-    //float* bp = (float*) aligned_alloc(32, sizeof(float)*aligned_n);  
+    size_t aligned_n = (n%8==0)?n:(n + (8 - n%8));
+    //float* ap = (float*) aligned_alloc(32, sizeof(float)*aligned_n);
+    //float* bp = (float*) aligned_alloc(32, sizeof(float)*aligned_n);
     //    if(ap == nullptr || bp == nullptr){
     //        cout << "avx2 vv dotproduct: failed to allocate aligned memory" << endl;
     //    }
@@ -68,7 +89,7 @@ float vv_dot_product_256(float* A, float* B, size_t n){
            for (size_t x = n; x < aligned_n; x++){
                 A[x] = 0.0f;
                 B[x] = 0.0f;
-           } 
+           }
         }
     //calculation
    __m256 sum = _mm256_setzero_ps(); //initializing the sum register
@@ -83,7 +104,7 @@ float vv_dot_product_256(float* A, float* B, size_t n){
         //__m256 mul = _mm256_mul_ps(va, vb);
         __m256 sum = _mm256_mul_ps(_mm256_load_ps(&A[i]), _mm256_load_ps(&B[i]));
         //sum = _mm256_add_ps(sum, mul);
-        
+
         //next, we need to add the partial sums inside the 'sum' register by consecutive horizontal adds
         __m256 hsum = _mm256_hadd_ps(sum, sum);
         hsum = _mm256_hadd_ps(hsum, hsum);
@@ -92,15 +113,13 @@ float vv_dot_product_256(float* A, float* B, size_t n){
         __m128 result = _mm_add_ps(bottomhalf, tophalf);
         product += _mm_cvtss_f32(result);
     }
-    free(ap);
-    free(bp);       
     cout << "avx2 vv dot product result: " << product << endl;
     return product;
 }
 
 float* vs_multiply(const float* v, const float s, size_t size){
     auto fullstart = chrono::system_clock().now();
-    cout << "avx2 vs mult: multiplying vector of size " << size << " with scalar " << s << endl; 
+    cout << "avx2 vs mult: multiplying vector of size " << size << " with scalar " << s << endl;
     size_t aligned_size = (size%8==0)?size:(size + (8 - size%8));
     //allocating 32-bit aligned memory
     float* v32 = (float*) aligned_alloc(32, sizeof(float)*aligned_size);
@@ -144,13 +163,13 @@ float* vs_multiply(const float* v, const float s, size_t size){
     cout << "}" << endl;
     auto fullstop = chrono::system_clock().now();
     cout << "avx vs mult: result calculated" << endl;
-    cout << "debug stats: " << endl << "full time (microseconds): " << chrono::duration_cast<chrono::microseconds>(fullstop-fullstart).count() << endl << " mult time (microseconds): " << chrono::duration_cast<chrono::microseconds>(multstop-multstart).count() << endl;  
+    cout << "debug stats: " << endl << "full time (microseconds): " << chrono::duration_cast<chrono::microseconds>(fullstop-fullstart).count() << endl << " mult time (microseconds): " << chrono::duration_cast<chrono::microseconds>(multstop-multstart).count() << endl;
     return trimmed_result;
 }
 
 /**TODO
 1. Transpose vectorized
 2. Matrix add, port existing code here
-3. Matrix class, port existing code here  
+3. Matrix class, port existing code here
 */
 #endif

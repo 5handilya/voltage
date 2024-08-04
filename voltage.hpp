@@ -74,7 +74,7 @@ float dot(const float* a, const float* b, size_t n) {
     cout << "GFLOPS: " << gflops << endl;
     return _mm_cvtss_f32(_mm256_extractf128_ps(hsum, 0)) + _mm_cvtss_f32(_mm256_extractf128_ps(hsum, 1));
 }
-float dot_improved_2(const float* __restrict a, const float* __restrict b, size_t n) { // best timing atm
+float dot_improved_2(const float* __restrict a, const float* __restrict b, size_t n) { // best timing atm //wait my commit email was wrong
     auto start = system_clock().now();
     __m256 sum1 = _mm256_setzero_ps();
     __m256 sum2 = _mm256_setzero_ps();

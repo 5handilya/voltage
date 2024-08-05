@@ -24,13 +24,8 @@ Legend for functions etc.:
 using namespace std;
 using namespace std::chrono;
 
-class matrix{
-    public:
-    private:
-
-};
 //AVX dot product of A and B
-//also handles 32bit alignment
+//input needs to be 32-bit aligned
 float vv_dot_avx_cache_optimized(const float* a, const float* b, size_t n) {
     //constexpr size_t cache_line = 64; //cache line size in bytes
     //constexpr size_t floats_per_cache_line = cache_line / sizeof(float);
@@ -55,11 +50,11 @@ float vv_dot_avx_cache_optimized(const float* a, const float* b, size_t n) {
 float dot(const float* a, const float* b, size_t n) {
     auto start = system_clock().now();
     __m256 sum = _mm256_setzero_ps();
-    //__m256 va = _mm256_setzero_ps();
-    //__m256 vb = _mm256_setzero_ps();
+    __m256 va = _mm256_setzero_ps();
+    __m256 vb = _mm256_setzero_ps();
     for (size_t i = 0; i < n; i+=8){
-        __m256 va = _mm256_load_ps(&a[i]);
-        __m256 vb = _mm256_load_ps(&b[i]);
+        va = _mm256_load_ps(&a[i]);
+        vb = _mm256_load_ps(&b[i]);
         //sum = _mm256_add_ps(sum, _mm256_mul_ps(va, vb));
         sum = _mm256_fmadd_ps(va, vb, sum); //using FMA speeds this up for 65 & 10^4,5 but gap decreases after
     }
@@ -74,29 +69,23 @@ float dot(const float* a, const float* b, size_t n) {
     cout << "GFLOPS: " << gflops << endl;
     return _mm_cvtss_f32(_mm256_extractf128_ps(hsum, 0)) + _mm_cvtss_f32(_mm256_extractf128_ps(hsum, 1));
 }
-float dot_improved_2(const float* __restrict a, const float* __restrict b, size_t n) { // best timing atm //wait my commit email was wrong
+float dot_improved_2(const float* a, const float* b, size_t n) { // best timing atm //wait my commit email was wrong
     auto start = system_clock().now();
     __m256 sum1 = _mm256_setzero_ps();
     __m256 sum2 = _mm256_setzero_ps();
-    //__m256 sum3 = _mm256_setzero_ps();
-    //__m256 sum4 = _mm256_setzero_ps();
-
-    for (size_t i = 0; i < n; i += 16) {
+    for (unsigned int i = 0; i < n; i += 16) {
         sum1 = _mm256_fmadd_ps(_mm256_load_ps(&a[i]), _mm256_load_ps(&b[i]), sum1);
         sum2 = _mm256_fmadd_ps(_mm256_load_ps(&a[i+8]), _mm256_load_ps(&b[i+8]), sum2);
-        //sum3 = _mm256_fmadd_ps(_mm256_load_ps(&a[i+16]), _mm256_load_ps(&b[i+16]), sum3);
-        //sum4 = _mm256_fmadd_ps(_mm256_load_ps(&a[i+24]), _mm256_load_ps(&b[i+24]), sum4);
     }
-    //__m256 sum = _mm256_add_ps(_mm256_add_ps(sum1, sum2), _mm256_add_ps(sum3, sum4));
     __m256 sum = _mm256_add_ps(sum1, sum2);
     __m256 hsum = _mm256_hadd_ps(sum, sum);
     hsum = _mm256_hadd_ps(hsum, hsum);
     auto stop = system_clock().now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    auto duration = duration_cast<microseconds>(stop - start);
     double seconds = duration.count() / 1e6;
     double flops = 2.0 * n; // 2 operations per element
     double gflops = (flops / seconds) / 1e9;
-    cout << "vv dot. duration (us): " << duration_cast<microseconds>(stop - start).count() << endl;
+    cout << "vv dot. (2) duration (us): " << duration_cast<microseconds>(stop - start).count() << endl;
     cout << "GFLOPS: " << gflops << endl;
     return _mm_cvtss_f32(_mm256_extractf128_ps(hsum, 0)) + _mm_cvtss_f32(_mm256_extractf128_ps(hsum, 1));
 }
@@ -121,7 +110,7 @@ float dot_improved_4(const float* __restrict a, const float* __restrict b, size_
     double seconds = duration.count() / 1e6;
     double flops = 2.0 * n; // 2 operations per element
     double gflops = (flops / seconds) / 1e9;
-    cout << "vv dot. duration (us): " << duration_cast<microseconds>(stop - start).count() << endl;
+    cout << "vv dot. (4) duration (us): " << duration_cast<microseconds>(stop - start).count() << endl;
     cout << "GFLOPS: " << gflops << endl;
     return _mm_cvtss_f32(_mm256_extractf128_ps(hsum, 0)) + _mm_cvtss_f32(_mm256_extractf128_ps(hsum, 1));
 }
@@ -176,7 +165,7 @@ float vv_dot_product_256(float* A, float* B, size_t n){
 }
 
 float* vs_multiply(const float* v, const float s, size_t size){
-    auto fullstart = chrono::system_clock().now();
+    auto fullstart = system_clock().now();
     cout << "avx2 vs mult: multiplying vector of size " << size << " with scalar " << s << endl;
     size_t aligned_size = (size%8==0)?size:(size + (8 - size%8));
     //allocating 32-bit aligned memory
@@ -213,16 +202,65 @@ float* vs_multiply(const float* v, const float s, size_t size){
         }
     }
     free(v32);
-    cout << "debug vs mult result:"<< endl;
-    cout << " { ";
-    for ( int i = 0; i < size;  i++){
-        cout << result[i] << " ";
-    }
-    cout << "}" << endl;
+    //cout << "debug vs mult result:"<< endl;
+    //cout << " { ";
+    //for ( int i = 0; i < size;  i++){
+    //    cout << result[i] << " ";
+    //}
+    //cout << "}" << endl;
     auto fullstop = chrono::system_clock().now();
     cout << "avx vs mult: result calculated" << endl;
     cout << "debug stats: " << endl << "full time (microseconds): " << chrono::duration_cast<chrono::microseconds>(fullstop-fullstart).count() << endl << " mult time (microseconds): " << chrono::duration_cast<chrono::microseconds>(multstop-multstart).count() << endl;
     return trimmed_result;
+}
+//size must be 8 multiple
+float* vs_multiply_aligned(const float* v, const float s, size_t size){ // fastest atm
+    cout << "avx2 vs mult: multiplying vector of size " << size << " with scalar " << s << endl;
+    auto fullstart = system_clock().now();
+    //unsigned int aligned_size = (size%8==0)?size:(size + (8 - size%8));
+    __m256 s32reg = _mm256_set1_ps(s);
+    float* result = (float*) aligned_alloc(32, sizeof(float)*size);
+    unsigned int c;
+    auto multstart = system_clock().now();
+    for (c = 0; c < size; c+=8){
+        __m256 v32reg = _mm256_load_ps(&v[c]);
+        v32reg = _mm256_mul_ps(v32reg, s32reg);
+        _mm256_store_ps(&result[c], v32reg);
+    }
+    auto multstop = chrono::system_clock().now();
+    //for ( int i = 0; i < size;  i++){
+    //    cout << result[i] << " ";
+    //}
+    auto fullstop = system_clock().now();
+    cout << "avx vs mult: result calculated" << endl;
+    cout << "debug stats: " << endl << "full time (microseconds): " << chrono::duration_cast<chrono::microseconds>(fullstop-fullstart).count() << endl << " mult time (microseconds): " << chrono::duration_cast<chrono::microseconds>(multstop-multstart).count() << endl;
+    return result;
+}
+//size must be 8 multiple
+float* vs_multiply_aligned_2(const float* v, const float s, size_t size){
+    cout << "avx2 vs mult: multiplying vector of size " << size << " with scalar " << s << endl;
+    auto fullstart = system_clock().now();
+    //unsigned int aligned_size = (size%8==0)?size:(size + (8 - size%8));
+    __m256 s32reg = _mm256_set1_ps(s);
+    __m256 v1 = _mm256_setzero_ps();
+    __m256 v2 = _mm256_setzero_ps();
+    float* result = (float*) aligned_alloc(32, sizeof(float)*size);
+    unsigned int c;
+    auto multstart = system_clock().now();
+    for (c = 0; c < size; c+=16){
+        v1 = _mm256_mul_ps(_mm256_load_ps(&v[c]), s32reg);
+        v2 = _mm256_mul_ps(_mm256_load_ps(&v[c+8]), s32reg);
+        _mm256_store_ps(&result[c], v1);
+        _mm256_store_ps(&result[c+8], v2);
+    }
+    auto multstop = chrono::system_clock().now();
+    //for ( int i = 0; i < size;  i++){
+    //    cout << result[i] << " ";
+    //}
+    auto fullstop = system_clock().now();
+    cout << "avx vs mult: result calculated" << endl;
+    cout << "debug stats: " << endl << "full time (microseconds): " << chrono::duration_cast<chrono::microseconds>(fullstop-fullstart).count() << endl << " mult time (microseconds): " << chrono::duration_cast<chrono::microseconds>(multstop-multstart).count() << endl;
+    return result;
 }
 
 /**TODO

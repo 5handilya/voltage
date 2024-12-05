@@ -1,5 +1,5 @@
 # VOLTAGE 
-*a SIMD-accelerated BLAS library*
+*matrix operations in C++, an exercise in SIMD intrinsics *
 
 ## Overview
 1. implement SIMD-leveraging functions required for neural net backprop and inference
